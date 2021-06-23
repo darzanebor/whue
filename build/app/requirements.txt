@@ -1,0 +1,4 @@
+flask>=1.1.2
+gunicorn>=20
+requests
+json_log_formatter
