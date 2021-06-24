@@ -23,9 +23,9 @@ RUN apk add --update --no-cache \
     rm -rf /root/.cache /var/cache
 FROM base
 ADD app /usr/src/app
-RUN addgroup -S cookie && adduser -S cookie -G cookie && \
-    chmod +x /usr/src/app/* && chown -R cookie:cookie /usr/src/app
+RUN addgroup -S whue && adduser -S whue -G whue && \
+    chmod +x /usr/src/app/* && chown -R whue:whue /usr/src/app
 EXPOSE 5000/tcp
-USER cookie
+USER whue
 WORKDIR /usr/src/app
 ENTRYPOINT [ "/usr/src/app/entry.sh" ]

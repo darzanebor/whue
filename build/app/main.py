@@ -26,8 +26,29 @@ def checkUserAgent():
 def addressIsPrivate(ip):
    return ipaddress.ip_address(ip).is_private
 
-@application.route("/", methods=["GET"])
-def req_handler():
+@application.route("/index.html")
+def default_index():
+    """Index page"""
+    return make_response(render_template("index.html"), 200)
+
+
+@application.route("/favicon.ico")
+def favicon():
+    """favicon.ico"""
+    return send_from_directory(
+        os.path.join(application.root_path, "static"),
+        "favicon.ico",
+        mimetype="image/vnd.microsoft.icon",
+    )
+
+@application.route("/healthz", methods=["GET"])
+def default_healthz():
+    """Index page"""
+    return make_response(render_template("index.html"), 200)
+
+@application.route("/<path:path>", methods=["GET"])
+@application.route("/<path:path>")
+def req_handler(path):
     """GET requests handler"""
     try:
         if request.method == "GET":
@@ -51,22 +72,6 @@ def req_handler():
 def resource_error(exception):
     """Internal Error."""
     return jsonify(str(exception)), 500
-
-
-@application.route("/index.html")
-def default_index():
-    """Index page"""
-    return make_response(render_template("index.html"), 200)
-
-
-@application.route("/favicon.ico")
-def favicon():
-    """favicon.ico"""
-    return send_from_directory(
-        os.path.join(application.root_path, "static"),
-        "favicon.ico",
-        mimetype="image/vnd.microsoft.icon",
-    )
 
 
 if __name__ == "__main__":
