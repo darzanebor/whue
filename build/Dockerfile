@@ -1,17 +1,6 @@
-FROM alpine:3.13 as base
+FROM alphaceti/default-python:latest as base
 COPY app/requirements.txt /usr/src/app/
-RUN apk add --update --no-cache \
-    python3 python3-dev \
-    openssl bash \
-    zlib curl && \
-    apk add libxml2-dev libxslt-dev \
-    libffi-dev gcc musl-dev libgcc \
-    openssl-dev jpeg-dev zlib-dev \
-    freetype-dev lcms2-dev openjpeg-dev \
-    tiff-dev tk-dev tcl-dev libmagic && \
-    curl https://bootstrap.pypa.io/get-pip.py -o- | python3 - && \
-    python3 -m pip install pip && \
-    pip3 install -r /usr/src/app/requirements.txt && \
+RUN pip3 install -r /usr/src/app/requirements.txt && \
     find / -type d -name __pycache__ -exec rm -r {} +   && \
     rm -rf /usr/lib/python*/ensurepip                   && \
     rm -rf /usr/lib/python*/turtledemo                  && \
@@ -28,4 +17,4 @@ RUN addgroup -S whue && adduser -S whue -G whue && \
 EXPOSE 5000/tcp
 USER whue
 WORKDIR /usr/src/app
-ENTRYPOINT [ "/usr/src/app/entry.sh" ]
+ENTRYPOINT [ "./entry.sh" ]
