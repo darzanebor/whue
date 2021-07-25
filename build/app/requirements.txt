@@ -3,4 +3,6 @@ gunicorn>=20
 requests
 json_log_formatter
 Flask-WTF
+IPWhois
 prometheus_client
+redis
