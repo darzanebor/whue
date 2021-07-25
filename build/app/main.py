@@ -5,8 +5,11 @@
 
 import os
 import time
+import redis
 import ipaddress
 import json_log_formatter  # Used in gunicorn_logging.conf
+from ipwhois.net import Net
+from ipwhois.asn import IPASN
 from flask import (
     Flask,
     request,
@@ -21,9 +24,19 @@ from flask_wtf.csrf import CSRFProtect
 
 application = Flask(__name__, template_folder="templates")
 
+application.config["WHUE_REDIS_HOST"] = str(os.environ.get("WHUE_REDIS_HOST", ""))
+application.config["WHUE_REDIS_PORT"] = int(os.environ.get("WHUE_REDIS_PORT", 6379))
+application.config["WHUE_ENABLE_REDIS"] = bool(os.environ.get("WHUE_ENABLE_REDIS", False))
+application.config["WHUE_REDIS_TIMEOUT"] = int(os.environ.get("WHUE_REDIS_TIMEOUT", 300))
+
 csrf = CSRFProtect()
 
-REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing request")
+REQUEST_TIME = Summary(
+    "whue_request_processing_seconds", "Time spent processing request"
+)
+REQUEST_TIME_WHOIS = Summary(
+    "whue_request_processing_whois", "Time spent processing request"
+)
 
 
 def checkuseragent():
@@ -63,6 +76,32 @@ def metrics():
     return generate_latest()
 
 
+def get_set_redis(ip, conn):
+    if conn.exists(ip):
+        ip_info = conn.hgetall(ip)
+    else:
+        ip_info = IPASN(Net(ip)).lookup()
+        conn.hset(ip, None, None, ip_info)
+    conn.expire(ip, application.config["WHUE_REDIS_TIMEOUT"])
+    return ip_info
+
+
+@REQUEST_TIME_WHOIS.time()
+def get_ip_info(ip):
+    if ip:
+        if application.config["WHUE_ENABLE_REDIS"]:
+            conn = redis.Redis(
+                application.config["WHUE_REDIS_HOST"],
+                application.config["WHUE_REDIS_PORT"],
+                charset="utf-8",
+                decode_responses=True
+            )  # Move to Object Init
+            obj = get_set_redis(ip, conn)
+        else:
+            obj = IPASN(Net(ip)).lookup()
+    return obj
+
+
 @application.route("/<path:path>", methods=["GET"])
 @application.route("/<path:path>")
 @REQUEST_TIME.time()
@@ -70,6 +109,7 @@ def req_handler(path):
     """GET requests handler"""
     try:
         if request.method == "GET":
+            ip_info = ""
             if request.headers.getlist("X-Forwarded-For"):
                 ip = request.headers.getlist("X-Forwarded-For")[
                     0
@@ -80,9 +120,11 @@ def req_handler(path):
                 ip = request.remote_addr
             if addressisprivate(ip):
                 ip = "private"
+            else:
+                ip_info = get_ip_info(ip)
             if checkuseragent():
                 return ip
-        return make_response(render_template("ip.html", ip=ip), 200)
+        return make_response(render_template("ip.html", ip=ip, ip_info=ip_info), 200)
     except:
         print("Error in req_handler()")
         return abort(500)
