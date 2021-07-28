@@ -1,4 +1,5 @@
-FROM alphaceti/default-python:latest as base
+ARG REGISTRY_GROUP_URL
+FROM ${REGISTRY_GROUP_URL}/alphaceti/default-python:0.1 as base
 COPY app/requirements.txt /usr/src/app/
 RUN pip3 install -r /usr/src/app/requirements.txt && \
     find / -type d -name __pycache__ -exec rm -r {} +   && \
@@ -11,6 +12,7 @@ RUN pip3 install -r /usr/src/app/requirements.txt && \
     rm -f /usr/lib/python*/pydoc.py                     && \
     rm -rf /root/.cache /var/cache
 FROM base
+ENV PROMETHEUS_MULTIPROC_DIR="/usr/src/app/prometheus"
 ADD app /usr/src/app
 RUN addgroup -S whue && adduser -S whue -G whue && \
     chmod +x /usr/src/app/* && chown -R whue:whue /usr/src/app
