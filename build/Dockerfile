@@ -1,5 +1,4 @@
-ARG REGISTRY_GROUP_URL
-FROM ${REGISTRY_GROUP_URL}/alphaceti/default-python:0.1 as base
+FROM alphaceti/default-python:0.1.3 as base
 COPY app/requirements.txt /usr/src/app/
 RUN pip3 install -r /usr/src/app/requirements.txt && \
     find / -type d -name __pycache__ -exec rm -r {} +   && \
