@@ -31,8 +31,7 @@ app.config["WHUE_REDIS_TIMEOUT"] = int(os.environ.get("WHUE_REDIS_TIMEOUT", 300)
 app.config["WHUE_RAW_USERAGENTS"] = ["curl","wget"]
 app.config["WHUE_REDIS_CONNECTION"] = None
 
-WHUE_REQUEST_TIME = Summary("whue_request_processing_seconds", "Time spent processing request")
-WHUE_WHOIS_REQUEST_TIME = Summary("whue_whois_request_processing_seconds", "Time spent processing request")
+WHUE_REQUEST_TIME = Summary("svc_request_processing_time", "Time spent processing request")
 
 def check_user_agent(user_agent):
     """ check client useragent """
@@ -91,7 +90,6 @@ def get_set_redis(ip_address, conn):
     return ip_info
 
 
-@WHUE_WHOIS_REQUEST_TIME.time()
 def get_ip_info(ip_address):
     """ obtain whois information about ip """
     if ip_address:
